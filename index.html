@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizator Obrazów AI</title>
+    
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/manifest/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/manifest/assets/favicon-16x16.png">
+    <link rel="icon" type="image/svg+xml" href="/manifest/assets/favicon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="/manifest/assets/apple-touch-icon.png">
+    
+
+    <link rel="manifest" href="/manifest/manifest.json">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AI Vision">
+    
+
+    <meta name="description" content="Analizuj obrazy za pomocą sztucznej inteligencji. Wykrywaj obiekty, generuj opisy i poznaj, co AI widzi na Twoich zdjęciach.">
+    
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <div class="nav-content">
+        <div class="nav-logo">
+          <img src="/manifest/assets/favicon.svg" alt="AI Vision Logo">
+          <span>Vision</span>
+        </div>
+        <div class="nav-menu">
+          <div id="authButtons" class="auth-buttons">
+            <button class="btn-nav" id="loginBtn">Zaloguj się</button>
+            <button class="btn-nav primary" id="registerBtn">Zarejestruj się</button>
+          </div>
+          <div id="userMenu" class="user-menu" style="display: none;">
+            <button class="btn-nav" id="historyButton">📜 Historia</button>
+            <span class="user-greeting" id="userGreeting">Cześć!</span>
+            <button class="btn-nav danger" id="logoutBtn">Wyloguj</button>
+          </div>
+          <label class="theme-switch">
+            <input type="checkbox" id="themeToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+      <div class="modal-content">
+        <span class="close" id="closeLogin">&times;</span>
+        <h2>Zaloguj się</h2>
+        <p class="modal-subtitle">Witaj ponownie!</p>
+
+        <form id="loginForm">
+          <input type="email" id="loginEmail" placeholder="Email" required>
+          <input type="password" id="loginPassword" placeholder="Hasło" required>
+          <button type="submit" class="btn-primary">Zaloguj się</button>
+        </form>
+
+        <div class="divider">lub</div>
+
+        <button class="btn-google" id="loginGoogle">
+          <span class="google-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+          </span>
+          Zaloguj przez Google
+        </button>
+
+        <p class="modal-footer">
+          <a href="#" id="forgotPassword" style="display: block; margin-bottom: 10px; color: #667eea; text-decoration: none; font-weight: 600;">Zapomniałeś hasła?</a>
+          Nie masz konta? <a href="#" id="switchToRegister">Zarejestruj się</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal">
+      <div class="modal-content">
+        <span class="close" id="closeRegister">&times;</span>
+        <h2>Zarejestruj się</h2>
+        <p class="modal-subtitle">Stwórz nowe konto</p>
+
+        <form id="registerForm">
+          <input type="email" id="registerEmail" placeholder="Email" required>
+          <input type="password" id="registerPassword" placeholder="Hasło (min. 6 znaków)" required minlength="6">
+          <input type="password" id="registerPasswordConfirm" placeholder="Powtórz hasło" required>
+          <button type="submit" class="btn-primary">Zarejestruj się</button>
+        </form>
+
+        <div class="divider">lub</div>
+
+        <button class="btn-google" id="registerGoogle">
+          <span class="google-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+          </span>
+          Zarejestruj przez Google
+        </button>
+
+        <p class="modal-footer">
+          Masz już konto? <a href="#" id="switchToLogin">Zaloguj się</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+      <div class="modal-content history-modal-content">
+        <span class="close" id="closeHistory">&times;</span>
+        <h2>Historia</h2>
+        <p class="modal-subtitle">Twoje poprzednie analizy obrazów</p>
+
+        <div id="historyContainer" class="history-container">
+          <div class="loading-spinner show" id="historyLoading"></div>
+          <div id="historyList" class="history-list"></div>
+          <div id="historyEmpty" class="history-empty" style="display: none;">
+            <p>Brak historii analiz</p>
+            <p style="font-size: 0.9em; color: #999; margin-top: 10px;">Przeanalizuj swoje pierwsze zdjęcie!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="header">
+        <h1>Analizator Obrazów AI</h1>
+        <p>Odkryj, co sztuczna inteligencja widzi na Twoich zdjęciach</p>
+      </div>
+
+      <div class="content">
+        <!-- Upload Section -->
+        <div id="heroSection" class="hero-section">
+          <h2 class="hero-title">Przeanalizuj swoje zdjęcie za pomocą Azure Computer Vision</h2>
+
+          <div class="hero-upload-zone" id="heroUploadZone">
+            <div class="upload-icon-large">📤</div>
+            <p class="upload-text-main">Przeciągnij lub kliknij tutaj</p>
+            <p class="upload-text-sub">JPG, PNG • Max 4MB</p>
+            <input type="file" id="heroImageInput" accept="image/jpeg, image/png" style="display: none;">
+          </div>
+
+          <div class="features-grid">
+            <div class="feature-item" data-tooltip="AI wykrywa i identyfikuje obiekty, osoby i zwierzęta na zdjęciu z wysoką dokładnością">
+              <span class="feature-icon">🎯</span>
+              <span class="feature-text">Detekcja obiektów</span>
+            </div>
+            <div class="feature-item" data-tooltip="Automatyczne generowanie opisów obrazu w języku polskim - idealne do dostępności i SEO">
+              <span class="feature-icon">💬</span>
+              <span class="feature-text">Opis w języku naturalnym</span>
+            </div>
+            <div class="feature-item" data-tooltip="Przetwarzanie obrazów w czasie rzeczywistym dzięki Azure Computer Vision API">
+              <span class="feature-icon">⚡</span>
+              <span class="feature-text">Błyskawiczna analiza</span>
+            </div>
+            <div class="feature-item" data-tooltip="Po analizie obrazu możesz wygenerować nowy obraz AI na podstawie wykrytych elementów">
+              <span class="feature-icon">🎨</span>
+              <span class="feature-text">Generuj obraz z tagów</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Logged Upload Area -->
+        <div id="uploadSection" style="display: none;">
+          <div class="hero-section">
+            <h2 class="hero-title">Przeanalizuj swoje zdjęcie za pomocą Azure Computer Vision</h2>
+
+            <div class="hero-upload-zone" id="uploadArea">
+              <div class="upload-icon-large">📤</div>
+              <p class="upload-text-main">Kliknij lub przeciągnij obraz</p>
+              <p class="upload-text-sub">JPG, PNG • Max 4MB</p>
+              <input type="file" id="imageInput" accept="image/jpeg, image/png" style="display: none;">
+              <div class="selected-file" id="selectedFile"></div>
+            </div>
+
+            <button id="uploadButton" style="margin-top: 20px; padding: 12px 32px; border: none; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+              Analizuj obraz
+            </button>
+
+            <!-- Features Section -->
+            <section id="featuresSection" class="features-section" style="display: none; margin-top: 40px;">
+              <div class="features-grid-alt">
+                
+                <!--Detekcja obiektów -->
+                <div class="feature-card">
+                  <div class="feature-icon-large">🎯</div>
+                  <h3 class="feature-title-alt">Detekcja obiektów</h3>
+                  <p class="feature-description">Automatyczne rozpoznawanie obiektów i ich klasyfikacja</p>
+                </div>
+                
+                <!-- Opis -->
+                <div class="feature-card">
+                  <div class="feature-icon-large">💬</div>
+                  <h3 class="feature-title-alt">Opis w języku naturalnym</h3>
+                  <p class="feature-description">Szczegółowy opis obrazu w zrozumiałym języku</p>
+                </div>
+                
+                <!-- analiza -->
+                <div class="feature-card">
+                  <div class="feature-icon-large">⚡</div>
+                  <h3 class="feature-title-alt">Błyskawiczna analiza</h3>
+                  <p class="feature-description">Wyniki w kilka sekund dzięki Azure AI</p>
+                </div>
+                
+                <!-- Generuj obraz -->
+                <div class="feature-card">
+                  <div class="feature-icon-large">🎨</div>
+                  <h3 class="feature-title-alt">Generuj obraz z tagów</h3>
+                  <p class="feature-description">Twórz nowe obrazy na podstawie wykrytych tagów</p>
+                </div>
+                
+              </div>
+            </section>
+
+            <div class="loading-spinner" id="loadingSpinner" style="margin: 20px auto;"></div>
+            <div id="status" style="margin-top: 20px;"></div>
+
+            <div class="results-container" id="resultsContainer" style="margin-top: 30px;">
+              <div class="result-section image-preview-section">
+                <h3>Przesłany obraz</h3>
+                <div class="image-preview-container">
+                  <img id="imagePreview" src="" alt="Podgląd obrazu">
+                </div>
+              </div>
+
+              <div class="result-section">
+                <h3>Opis obrazu</h3>
+                <div class="caption" id="captionText"></div>
+              </div>
+
+              <div class="result-section tags-section">
+                <h3>Wykryte elementy</h3>
+                <div class="tags-container" id="tagsContainer"></div>
+                
+                <!--Generate from tags-->
+                <div class="generate-from-tags-section" id="generateFromTagsSection" style="display: none; margin-top: 30px;">
+                  <div class="divider-with-text">
+                    <span>🎨 Generuj nowy obraz z AI</span>
+                  </div>
+                  
+                  <p class="generate-hint">Wygeneruj nowy obraz używając wykrytych elementów jako inspiracji</p>
+                  
+                  <div class="prompt-preview-container">
+                    <label for="promptPreview" class="prompt-preview-label">Prompt dla DALL-E 3:</label>
+                    <textarea 
+                      id="promptPreview" 
+                      class="prompt-preview" 
+                      rows="3"
+                      placeholder="Edytuj prompt przed generowaniem..."
+                    ></textarea>
+                    <p class="prompt-hint">💡 Możesz edytować prompt przed wygenerowaniem obrazu</p>
+                  </div>
+
+                  <div class="generation-options-compact">
+                    <div class="option-group">
+                      <label for="sizeSelect">📐 Rozmiar:</label>
+                      <select id="sizeSelect" class="option-select">
+                        <option value="1024x1024" selected>Kwadrat (1024x1024)</option>
+                        <option value="1792x1024">Panorama (1792x1024)</option>
+                        <option value="1024x1792">Portret (1024x1792)</option>
+                      </select>
+                    </div>
+
+                    <div class="option-group">
+                      <label for="qualitySelect">✨ Jakość:</label>
+                      <select id="qualitySelect" class="option-select">
+                        <option value="standard" selected>Standard (~$0.04)</option>
+                        <option value="hd">HD (~$0.08)</option>
+                      </select>
+                    </div>
+
+                    <div class="option-group">
+                      <label for="styleSelect">🎨 Styl:</label>
+                      <select id="styleSelect" class="option-select">
+                        <option value="vivid" selected>Żywy</option>
+                        <option value="natural">Naturalny</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button id="generateFromTagsBtn" class="btn-generate-from-tags">
+                    <span class="btn-icon">🎨</span>
+                    <span class="btn-text">Wygeneruj obraz z DALL-E 3</span>
+                  </button>
+
+                  <div class="loading-spinner" id="generateLoadingSpinner"></div>
+                  <div id="generateStatus"></div>
+
+                  <!-- Generated Display -->
+                  <div class="generated-image-result" id="generatedImageResult" style="display: none;">
+                    <div class="result-divider"></div>
+                    <h3>🎉 Wygenerowany obraz AI</h3>
+                    
+                    <div class="image-comparison">
+                      <div class="image-comparison-item">
+                        <p class="comparison-label">📸 Oryginalny obraz</p>
+                        <div class="comparison-image-wrapper">
+                          <img id="originalImagePreview" src="" alt="Oryginalny obraz">
+                        </div>
+                      </div>
+                      
+                      <div class="image-comparison-arrow">→</div>
+                      
+                      <div class="image-comparison-item">
+                        <p class="comparison-label">🎨 Wygenerowany przez AI</p>
+                        <div class="comparison-image-wrapper">
+                          <img id="generatedImage" src="" alt="Wygenerowany obraz">
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="revised-prompt-section" id="revisedPromptSection" style="display: none;">
+                      <p class="revised-prompt-label">📝 Zmodyfikowany prompt AI:</p>
+                      <p class="revised-prompt-text" id="revisedPromptText"></p>
+                    </div>
+
+                    <div class="generated-actions">
+                      <button id="downloadGeneratedBtn" class="btn-download">
+                        <span class="btn-icon">⬇️</span>
+                        <span class="btn-text">Pobierz wygenerowany obraz</span>
+                      </button>
+                      <button id="generateAgainBtn" class="btn-secondary">
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">Wygeneruj ponownie</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instalacja PWa -->
+    <div id="installPrompt" class="install-prompt" style="display: none;">
+      <div class="install-content">
+        <span class="install-icon">📱</span>
+        <div class="install-text">
+          <strong>Zainstaluj aplikację</strong>
+          <p>Dodaj AI Vision do ekranu głównego</p>
+        </div>
+        <div class="install-buttons">
+          <button id="installButton" class="btn-install">Zainstaluj</button>
+          <button id="dismissInstall" class="btn-dismiss">Nie teraz</button>
+        </div>
+      </div>
+    </div>
+
+
+    <script src="tooltip-mobile.js"></script>
+
+    <!-- zmiana theme -->
+    <script src="theme.js"></script>
+
+    <!-- Service Worker installation -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/manifest/service-worker.js')
+            .then(registration => console.log('✅ Service Worker zarejestrowany:', registration.scope))
+            .catch(error => console.log('❌ Błąd rejestracji Service Worker:', error));
+        });
+      }
+
+      
+      let deferredPrompt;
+      const installPrompt = document.getElementById('installPrompt');
+      const installButton = document.getElementById('installButton');
+      const dismissInstall = document.getElementById('dismissInstall');
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        setTimeout(() => {
+          if (!localStorage.getItem('installDismissed')) {
+            installPrompt.style.display = 'block';
+          }
+        }, 3000);
+      });
+
+      if (installButton) {
+        installButton.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response: ${outcome}`);
+            deferredPrompt = null;
+            installPrompt.style.display = 'none';
+          }
+        });
+      }
+
+      if (dismissInstall) {
+        dismissInstall.addEventListener('click', () => {
+          installPrompt.style.display = 'none';
+          localStorage.setItem('installDismissed', 'true');
+        });
+      }
+    </script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script src="firebase-config.js"></script>
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="history.js"></script>
+    <script type="module" src="image-generator.js"></script>
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
