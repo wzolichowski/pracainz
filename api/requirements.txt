@@ -1,0 +1,5 @@
+azure-functions
+azure-cognitiveservices-vision-computervision
+msrest
+requests>=2.31.0
+openai>=1.0.0
