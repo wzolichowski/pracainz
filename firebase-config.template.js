@@ -1,6 +1,4 @@
-// Firebase Configuration Template
-// This file is committed to git
-// Real values are injected during GitHub Actions build
+//firebase config template to create auth during gitactions secret 
 
 const firebaseConfig = {
   apiKey: "%%FIREBASE_API_KEY%%",
