@@ -121,7 +121,7 @@ Aplikacja webowa do analizy obrazów z wykorzystaniem **Azure Computer Vision** 
 ## Struktura projektu
 
 ```
-inzynierska/
+praca_inzynierska/
 ├── index.html              # Główna strona PWA
 ├── script.js               # Logika analizy obrazów
 ├── auth.js                 # Autoryzacja Firebase
