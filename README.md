@@ -4,7 +4,7 @@ Aplikacja webowa do analizy obrazów z wykorzystaniem **Azure Computer Vision** 
 
 ##  Spis treści
 
-- [Funkcjonalności](#-funkcjonalności)
+- [Funkcjonalności]
 - [Architektura](#-architektura)
 - [Technologie](#-technologie)
 - [Konfiguracja](#-konfiguracja)
