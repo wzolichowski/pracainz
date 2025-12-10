@@ -1,4 +1,4 @@
-# Image Analysis & Generation PWA
+# AI VISION
 
 Aplikacja webowa do analizy obrazów z wykorzystaniem **Azure Computer Vision** oraz generowania nowych obrazów za pomocą **Azure OpenAI (DALL-E 3)**.
 
