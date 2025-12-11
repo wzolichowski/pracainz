@@ -1,14 +1,14 @@
-# Image Analysis & Generation PWA
+# AI VISION
 
 Aplikacja webowa do analizy obrazów z wykorzystaniem **Azure Computer Vision** oraz generowania nowych obrazów za pomocą **Azure OpenAI (DALL-E 3)**.
 
 ##  Spis treści
 
-- [Funkcjonalności](#-funkcjonalności)
-- [Architektura](#-architektura)
-- [Technologie](#-technologie)
-- [Konfiguracja](#-konfiguracja)
-- [Struktura projektu](#-struktura-projektu)
+- Funkcjonalności
+- Architektura
+- Technologie
+- Konfiguracja
+- Struktura projektu
 
 ---
 
@@ -121,7 +121,7 @@ Aplikacja webowa do analizy obrazów z wykorzystaniem **Azure Computer Vision** 
 ## Struktura projektu
 
 ```
-inzynierska/
+praca_inzynierska/
 ├── index.html              # Główna strona PWA
 ├── script.js               # Logika analizy obrazów
 ├── auth.js                 # Autoryzacja Firebase
