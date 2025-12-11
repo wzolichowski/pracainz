@@ -1,0 +1,358 @@
+import { batchAppend, formatRelativeDate } from './utils.js';
+
+
+const historyButton = document.getElementById('historyButton');
+const historyModal = document.getElementById('historyModal');
+const closeHistory = document.getElementById('closeHistory');
+const historyList = document.getElementById('historyList');
+const historyLoading = document.getElementById('historyLoading');
+const historyEmpty = document.getElementById('historyEmpty');
+
+// Show history modal
+if (historyButton) {
+    historyButton.addEventListener('click', () => {
+        if (!window.currentUser) {
+            document.getElementById('loginBtn').click();
+            return;
+        }
+        historyModal.classList.add('show');
+        loadHistory();
+    });
+}
+
+// Close history modal
+if (closeHistory) {
+    closeHistory.addEventListener('click', () => {
+        historyModal.classList.remove('show');
+    });
+}
+
+// Close on outside click
+window.addEventListener('click', (e) => {
+    if (e.target === historyModal) {
+        historyModal.classList.remove('show');
+    }
+});
+
+// Close on ESC key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && historyModal.classList.contains('show')) {
+        historyModal.classList.remove('show');
+    }
+});
+
+// Load history from Firestore
+async function loadHistory() {
+    if (!window.currentUser) {
+        return;
+    }
+
+    historyLoading.classList.add('show');
+    historyList.innerHTML = '';
+    historyEmpty.style.display = 'none';
+
+    try {
+        const snapshot = await db.collection('analyses')
+            .where('userId', '==', window.currentUser.uid)
+            .orderBy('timestamp', 'desc')
+            .limit(50)
+            .get();
+
+        historyLoading.classList.remove('show');
+
+        if (snapshot.empty) {
+            historyEmpty.style.display = 'block';
+            return;
+        }
+
+        const deleteAllContainer = document.createElement('div');
+        deleteAllContainer.className = 'delete-all-container';
+
+        const deleteAllBtn = document.createElement('button');
+        deleteAllBtn.className = 'btn-delete-all';
+        deleteAllBtn.id = 'deleteAllHistoryBtn';
+
+        const iconSpan = document.createElement('span');
+        iconSpan.textContent = '🗑️';
+
+        const textSpan = document.createElement('span');
+        textSpan.textContent = 'Usuń całą historię';
+
+        deleteAllBtn.appendChild(iconSpan);
+        deleteAllBtn.appendChild(textSpan);
+        deleteAllContainer.appendChild(deleteAllBtn);
+        historyList.appendChild(deleteAllContainer);
+
+        deleteAllBtn.addEventListener('click', deleteAllHistory);
+
+        // Render history items
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const historyItem = createHistoryItem(doc.id, data);
+            historyList.appendChild(historyItem);
+        });
+
+
+    } catch (error) {
+        console.error('Error loading history:', error);
+        historyLoading.classList.remove('show');
+        historyList.innerHTML = '<div class="history-error">❌ Błąd ładowania historii</div>';
+    }
+}
+
+function createHistoryItem(docId, data) {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.dataset.docId = docId;
+
+    const timestamp = data.timestamp ? data.timestamp.toDate() : new Date();
+    const formattedDate = formatDate(timestamp);
+
+    if (data.imagePreview) {
+        const imageDiv = document.createElement('div');
+        imageDiv.className = 'history-item-image';
+        const img = document.createElement('img');
+        img.src = data.imagePreview;
+        img.alt = data.fileName || 'Preview';
+        imageDiv.appendChild(img);
+        item.appendChild(imageDiv);
+    }
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'history-item-content';
+
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'history-item-header';
+
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'history-item-info';
+
+    const filenameDiv = document.createElement('div');
+    filenameDiv.className = 'history-item-filename';
+    filenameDiv.textContent = data.fileName || 'Unknown file';
+
+    const dateDiv = document.createElement('div');
+    dateDiv.className = 'history-item-date';
+    dateDiv.textContent = formattedDate;
+
+    infoDiv.appendChild(filenameDiv);
+    infoDiv.appendChild(dateDiv);
+    headerDiv.appendChild(infoDiv);
+    contentDiv.appendChild(headerDiv);
+
+    const captionDiv = document.createElement('div');
+    captionDiv.className = 'history-item-caption';
+    captionDiv.textContent = data.caption || 'No description';
+    contentDiv.appendChild(captionDiv);
+
+    const tagsDiv = document.createElement('div');
+    tagsDiv.className = 'history-item-tags';
+
+    const tags = data.tags ? data.tags.slice(0, 5) : [];
+    batchAppend(tagsDiv, tags, (tag) => {
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'history-tag';
+        tagSpan.textContent = tag;
+        return tagSpan;
+    });
+
+    if (data.tags && data.tags.length > 5) {
+        const moreTagsSpan = document.createElement('span');
+        moreTagsSpan.className = 'history-tag';
+        moreTagsSpan.textContent = `+${data.tags.length - 5}`;
+        tagsDiv.appendChild(moreTagsSpan);
+    }
+
+    contentDiv.appendChild(tagsDiv);
+
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'history-item-actions';
+
+    const viewBtn = document.createElement('button');
+    viewBtn.className = 'btn-history-view';
+    const viewIcon = document.createElement('span');
+    viewIcon.textContent = '👁️';
+    const viewText = document.createTextNode(' Zobacz');
+    viewBtn.appendChild(viewIcon);
+    viewBtn.appendChild(viewText);
+    viewBtn.addEventListener('click', () => viewHistoryItem(docId));
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-history-delete';
+    const deleteIcon = document.createElement('span');
+    deleteIcon.textContent = '🗑️';
+    deleteBtn.appendChild(deleteIcon);
+    deleteBtn.addEventListener('click', () => deleteHistoryItem(docId));
+
+    actionsDiv.appendChild(viewBtn);
+    actionsDiv.appendChild(deleteBtn);
+    contentDiv.appendChild(actionsDiv);
+
+    item.appendChild(contentDiv);
+
+    return item;
+}
+
+async function viewHistoryItem(docId) {
+    try {
+        const doc = await db.collection('analyses').doc(docId).get();
+        if (!doc.exists) {
+            alert('Nie znaleziono analizy');
+            return;
+        }
+
+        const data = doc.data();
+        
+        // Close history modal
+        historyModal.classList.remove('show');
+        
+        // display analysis
+        if (data.imagePreview) {
+            document.getElementById('imagePreview').src = data.imagePreview;
+        }
+        
+        document.getElementById('captionText').textContent = data.caption || 'No description';
+        
+        const tagsContainer = document.getElementById('tagsContainer');
+        tagsContainer.innerHTML = '';
+        if (data.tags) {
+            data.tags.forEach((tag, index) => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'tag';
+                tagElement.textContent = tag;
+                tagElement.style.animationDelay = `${index * 0.05}s`;
+                tagsContainer.appendChild(tagElement);
+            });
+        }
+        
+        document.getElementById('resultsContainer').classList.add('show');
+        
+        currentAnalysisData = {
+            caption: data.caption || 'No description',
+            tags: data.tags || [],
+            fileName: data.fileName,
+            imagePreview: data.imagePreview
+        };
+        window.currentAnalysisData = currentAnalysisData;
+        
+        // Show generate 
+        showGenerateFromTagsSection();
+        
+        // Scroll results
+        setTimeout(() => {
+            document.getElementById('resultsContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+        
+    } catch (error) {
+        console.error('Error viewing history item:', error);
+        alert('Błąd wczytywania analizy');
+    }
+}
+
+async function deleteHistoryItem(docId) {
+    if (!confirm('Czy na pewno chcesz usunąć tę analizę?')) {
+        return;
+    }
+
+    try {
+        await db.collection('analyses').doc(docId).delete();
+        
+        
+        const item = document.querySelector(`[data-doc-id="${docId}"]`);
+        if (item) {
+            item.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                item.remove();
+                
+                // Check if empty
+                const remainingItems = document.querySelectorAll('.history-item');
+                if (remainingItems.length === 0) {
+                    historyEmpty.style.display = 'block';
+                }
+            }, 300);
+        }
+        
+        
+    } catch (error) {
+        console.error('Error deleting history item:', error);
+        alert('Błąd usuwania analizy');
+    }
+}
+
+// Delete all history
+async function deleteAllHistory() {
+    const confirmMessage = 'Czy na pewno chcesz usunąć CAŁĄ historię?\n';
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+
+
+    
+
+    try {
+        historyLoading.classList.add('show');
+        
+        // Get all user's analyses
+        const snapshot = await db.collection('analyses')
+            .where('userId', '==', window.currentUser.uid)
+            .get();
+
+        if (snapshot.empty) {
+            historyLoading.classList.remove('show');
+            alert('Brak historii do usunięcia');
+            return;
+        }
+
+        const totalDocs = snapshot.size;
+
+
+        const deletePromises = [];
+        snapshot.forEach((doc) => {
+            deletePromises.push(doc.ref.delete());
+        });
+
+        // Wait for all deletes to complete
+        await Promise.all(deletePromises);
+
+
+        historyList.innerHTML = '';
+        historyEmpty.style.display = 'block';
+        historyLoading.classList.remove('show');
+
+        alert(`Usunięto ${totalDocs} analiz z historii`);
+
+    } catch (error) {
+        console.error('Error deleting all history:', error);
+        historyLoading.classList.remove('show');
+        
+        if (error.code === 'permission-denied') {
+            alert('Błąd uprawnień');
+        } else {
+            alert('Błąd podczas usuwania historii: ' + error.message);
+        }
+    }
+}
+
+// Format date
+function formatDate(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Przed chwilą';
+    if (diffMins < 60) return `${diffMins} min temu`;
+    if (diffHours < 24) return `${diffHours} godz. temu`;
+    if (diffDays < 7) return `${diffDays} dni temu`;
+
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+}
+
